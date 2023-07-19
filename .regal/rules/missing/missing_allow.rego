@@ -1,6 +1,6 @@
 # METADATA
 # description: No "allow" rule present
-package custom.regal.rules.missing.allow
+package custom.regal.rules.missing.decision
 
 import future.keywords.every
 import future.keywords.in 
@@ -11,7 +11,7 @@ import data.regal.result
 
 report contains violation if {
     every rule in input.rules{
-        rule.head.name != "allow"
+        rule.head.name != "decision"
     }
-    violation := "Missing allow clause"
+    violation := "Missing decision clause"
 }
