@@ -1,5 +1,5 @@
 # METADATA
-# description: No "allow" rule present
+# description: No 'decision' rule present
 package custom.regal.rules.missing.decision
 
 import future.keywords.every
@@ -13,5 +13,5 @@ report contains violation if {
     every rule in input.rules{
         rule.head.name != "decision"
     }
-    violation := "Missing decision clause"
+    violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }

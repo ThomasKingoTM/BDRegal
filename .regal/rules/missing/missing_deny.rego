@@ -1,5 +1,5 @@
 # METADATA
-# description: No "deny" rule present
+# description: No 'deny_reasons' rule present
 package custom.regal.rules.missing["deny-reasons"]
 
 import future.keywords.every
@@ -13,5 +13,5 @@ report contains violation if {
     every rule in input.rules{
         rule.head.name != "deny_reasons"
     }
-    violation := "Missing deny_reasons clause"
+    violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }

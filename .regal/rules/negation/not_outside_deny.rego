@@ -19,5 +19,5 @@ report contains violation if {
 	#print(sprintf("rule.head.name is: %v", [rule.head.name]))
 	#print(sprintf("negated is: %v", [expr.negated]))
 
-	violation := "Use of 'not' outside deny clause" 
+	violation := result.fail(rego.metadata.chain(), result.location(expr)) 
 }
