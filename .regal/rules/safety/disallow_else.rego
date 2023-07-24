@@ -10,8 +10,7 @@ import data.regal.result
 
 report contains violation if {
 	some rule in input.rules
-	some expr in rule.body
-	expr.head == "else" 
+	some expr in rule["else"]
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }

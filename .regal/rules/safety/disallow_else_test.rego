@@ -23,10 +23,6 @@ test_fail_disallow_else if {
             "title": "disallow-else"
         }
     }
-    print("r is:")
-    print(r)
-    print("res is:")
-    print(res)
 	r == res
 }
 

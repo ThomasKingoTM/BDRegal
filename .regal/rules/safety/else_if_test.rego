@@ -19,14 +19,10 @@ test_fail_else_if if {
             "category": "safety",
             "description": "Else keyword only allowed in 'else if' construct",
             "level": "error",
-            "location": {"col": 1, "file": "policy.rego", "row": 3, "text": "else {"},
+            "location": {"col": 5, "file": "policy.rego", "row": 6, "text": "    else {"},
             "title": "else-if"
         }
     }
-    print("r is:")
-    print(r)
-    print("res is:")
-    print(res)
 	r == res
 }
 
