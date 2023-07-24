@@ -16,8 +16,5 @@ report contains violation if {
 	rule.head.name != "deny"
 	expr.negated == true
 
-	#print(sprintf("rule.head.name is: %v", [rule.head.name]))
-	#print(sprintf("negated is: %v", [expr.negated]))
-
 	violation := result.fail(rego.metadata.chain(), result.location(expr)) 
 }

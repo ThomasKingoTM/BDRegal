@@ -15,11 +15,7 @@ test_fail_shadow_built_in if {
             "description": "Shadowing built-in functions is not allowed",
             "level": "error",
             "location": {"col": 1, "file": "policy.rego", "row": 3, "text": "gt(left, right) := sprintf(\"values provided: %v, %v\", [left, right])"},
-            "related_resources": [{
-                "description": "documentation", 
-                "ref": config.docs.resolve_url("$baseUrl/$category/decision", "missing"),
-            }],
-            "title": "decision"
+            "title": "shadow-built-in"
         }
     }
     print("r is:")
