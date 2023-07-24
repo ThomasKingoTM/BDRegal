@@ -12,18 +12,39 @@ import data.regal.ast
 report contains violation if {
 	some rule in input.rules
     some expr in rule["else"]
+	exists(expr)
 	
 	not _contains_else_if_construct
 
 	not _has_imported_future_keywords_if
 	
-
 	violation := result.fail(rego.metadata.chain(), result.location(expr))
+}
+
+# Possibly missing case: Using "else if" but not importing future.keywords.if. (Handled by baseline regal-linter case 'rule_named_if.rego')
+
+
+# METADATA
+# description: Else used outside 'else if' construct
+report contains violation if {
+	some rule in input.rules
+    some expr in rule["else"]
+	exists(expr)
+	
+	not _contains_else_if_construct
+
+	_has_imported_future_keywords_if
+	
+	violation := result.fail(rego.metadata.chain(), result.location(expr))
+}
+
+exists(x) := true if {
+	x == x
 }
 
 _contains_else_if_construct := true {
 	some i, line in input.regal.file.lines
-	"else if" in line 
+	"else if {" == trim_space(line)
 }
 
 _has_imported_future_keywords_if := true {
