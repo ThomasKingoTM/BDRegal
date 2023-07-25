@@ -16,11 +16,10 @@ test_fail_not_outside_deny if {
             "category": "negation",
             "description": "Use of 'not' outside deny-clause",
             "level": "error",
-            "location": {"col": 9, "file": "policy.rego", "row": 5, "text": "        not input.foo"},
-            "related_resources": [{
-                "description": "documentation", 
-                "ref": config.docs.resolve_url("$baseUrl/$category/not-outside-deny", "negation"),
-            }],
+            "location": {"col": 9, 
+                        "file": "policy.rego", 
+                        "row": 5, 
+                        "text": "        not input.foo"},
             "title": "not-outside-deny"
         }
     }

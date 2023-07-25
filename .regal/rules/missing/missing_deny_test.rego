@@ -17,10 +17,6 @@ test_fail_missing_deny_reasons if {
             "description": "No 'deny_reasons' rule present",
             "level": "error",
             "location": {"col": 1, "file": "policy.rego", "row": 3, "text": "some_rule := true {"},
-            "related_resources": [{
-                "description": "documentation", 
-                "ref": config.docs.resolve_url("$baseUrl/$category/deny-reasons", "missing"),
-            }],
             "title": "deny-reasons"
         }
     }

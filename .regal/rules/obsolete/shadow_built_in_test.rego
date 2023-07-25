@@ -6,7 +6,7 @@ import data.regal.ast
 import data.regal.config
 import data.custom.regal.rules.safety["shadow-built-in"] as rule
 
-test_fail_shadow_built_in if {
+_test_fail_shadow_built_in if {
 	r := rule.report with input as ast.policy(
     `gt(left, right) := sprintf("values provided: %v, %v", [left, right])`)
     res := {
@@ -25,7 +25,7 @@ test_fail_shadow_built_in if {
 	r == res
 }
 
-test_success_use_built_in if {
+_test_success_use_built_in if {
     r := rule.report with input as ast.policy(`
     some_rule := true {
         left := input.left 

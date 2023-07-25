@@ -25,13 +25,15 @@ test_fail_prefix_underscore if {
                 "row": 3,
                 "text": "some_rule := true {"
             },
-            "title": "prefix_underscore"
+            "title": "prefix-underscore"
         }
     }
+    print(r)
+    print(res)
     r == res
 }
 
-test_fail_prefix_underscore if {
+test_fail_prefix_underscore2 if {
     r := rule.report with input as ast.policy(
     `_some_rule := true {
         input.foo
@@ -46,12 +48,12 @@ test_fail_prefix_underscore if {
             "description": "Non-query variables must start with an underscore.",
             "level": "error",
             "location": {
-                "col": 1,
+                "col": 5,
                 "file": "policy.rego",
                 "row": 6,
-                "text": "some_other_rule := true {"
+                "text": "    some_other_rule := true {"
             },
-            "title": "prefix_underscore"
+            "title": "prefix-underscore"
         }
     }
     r == res

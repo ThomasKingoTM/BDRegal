@@ -1,9 +1,9 @@
 package p
 
 
-decision := {allow: true} {
-    input.foo
-}
-decision := {allow: false} {
-    not input.foo
+_some_rule := true {
+        input.foo
+    } 
+some_other_rule := true {
+        input.bar
 }
