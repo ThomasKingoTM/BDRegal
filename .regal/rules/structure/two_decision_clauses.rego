@@ -10,20 +10,25 @@ import future.keywords.if
 import data.regal.result
 
 report contains violation if {
-    not _contains_decision_false_clause
-    violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
-}
-
-report contains violation if {
+    # If the policy is missing a "decision := {"allow": true}"
     not _contains_decision_true_clause
     violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }
 
 report contains violation if {
+    # If the policy is missing a "decision := {"allow": false}"
+    not _contains_decision_false_clause
+    violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
+}
+
+report contains violation if {
+    # If the policy has more than two "decision := {"allow": true/false}" clauses
     _contains_three_decision_clauses
     violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }
 
+
+# Helpers
 _contains_decision_true_clause := true {
     some i, line in input.regal.file.lines
     contains(line,("decision := {\"allow\": true"))
