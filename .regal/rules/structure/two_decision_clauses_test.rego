@@ -56,3 +56,14 @@ test_success_two_decision_clauses if {
     }`)
     r == set()
 }
+
+test_success_longer_decision_clauses if {
+    r := rule.report with input as ast.policy(`
+    decision := {"allow": true, "string": "foo"} {
+        input.foo
+    }
+    decision := {"allow": false, "string": "bar"} {
+        not input.foo
+    }`)
+    r == set()
+}

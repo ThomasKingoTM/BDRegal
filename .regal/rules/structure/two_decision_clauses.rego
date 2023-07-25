@@ -11,19 +11,16 @@ import data.regal.result
 
 report contains violation if {
     not _contains_decision_false_clause
-    
     violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }
 
 report contains violation if {
     not _contains_decision_true_clause
-
     violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }
 
 report contains violation if {
     _contains_three_decision_clauses
-
     violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }
 
