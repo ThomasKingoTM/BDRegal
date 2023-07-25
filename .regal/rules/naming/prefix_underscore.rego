@@ -11,9 +11,9 @@ import data.regal.result
 report contains violation if {
     some name in input.rules.head
     not name in _allowed_names
-    not name.startswith("_")
+    not startswith(name, "_")
     
-    violation := result.fail(regal.metadata.chain(), result.position())
+    violation := result.fail(rego.metadata.chain(), result.location(input.rules.head))
 }
 
 _allowed_names := ["decision", "deny_reasons"]
