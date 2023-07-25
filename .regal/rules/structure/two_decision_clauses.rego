@@ -10,27 +10,41 @@ import future.keywords.if
 import data.regal.result
 
 report contains violation if {
-    some rule in input.rules
-    rule.head.name == "decision"
-    rule.head.value.value[0].value == "true"
-
-    every rule2 in input.rules {
-        rule2.head.name != "decision"
-        rule2 != rule
-    }
+    not _contains_decision_false_clause
     
-    violation := result.fail(rego.metadata.chain(), result.location(rule.head))
+    violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }
 
 report contains violation if {
-    some rule in input.rules 
-    rule.head.name == "decision"
-    rule.head.value.value[1].value == "false"
-    
-    every rule2 in input.rules {
-        rule2.head.name != "decision"
-        rule2 != rule
-    }
+    not _contains_decision_true_clause
 
-    violation := result.fail(rego.metadata.chain(), result.location(rule.head))
+    violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
+}
+
+report contains violation if {
+    _contains_three_decision_clauses
+
+    violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
+}
+
+_contains_decision_true_clause := true {
+    some i, line in input.regal.file.lines
+    contains(line,("decision := {\"allow\": true"))
+}
+
+_contains_decision_false_clause := true {
+    some i, line in input.regal.file.lines
+    contains(line, ("decision := {\"allow\": false"))
+}
+
+_contains_three_decision_clauses := true {
+    some i, line in input.regal.file.lines
+    some j, line2 in input.regal.file.lines
+    some k, line3 in input.regal.file.lines
+    i != j
+    i != k
+    j != k
+    contains(line, ("decision := {\"allow\":"))
+    contains(line2, ("decision := {\"allow\":"))
+    contains(line3, ("decision := {\"allow\":"))
 }

@@ -9,6 +9,7 @@ import future.keywords.in
 import data.regal.result
 import data.regal.ast
 
+# THIS ENTIRE POLICY IS REDUNDANT - IT IS ALREADY COVERED BY THE "rule_shadows_builtin" IN /bundle/regal/rules/bugs.
 _list_of_globals_opa_0_45 := ["abs", "all", "and", "any", "array", "assign", "bits", "cast_array", "cast_boolean", "cast_null", "cast_object", "cast_set", "cast_string",
                      "ceil", "concat", "contains", "count", "crypto", "data", "div", "endswith", "eq", "equal", "floor", "format_int", "glob", "graph", "graphql",
                      "gt", "gte", "hex", "http", "indexof", "indexof_n", "input", "internal", "intersection", "io", "is_array", "is_boolean", "is_null",
