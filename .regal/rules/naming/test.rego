@@ -1,4 +1,4 @@
-package custom.regal.rules.naming["prefix-underscore_test"]
+package custom.regal.rules.
 
 import future.keywords.if
 import future.keywords.in
@@ -6,9 +6,9 @@ import future.keywords.contains
 
 import data.regal.ast
 import data.regal.config
-import custom.regal.rules.naming["prefix-underscore"] as rule
+import custom.regal.rules. as rule
 
-test_fail_prefix_underscore if {
+test_fail_ if {
     r := rule.report with input as ast.policy(
     `decision := {"allow": true} {
         input.foo
@@ -31,11 +31,13 @@ test_fail_prefix_underscore if {
 }
 
 
-test_success_prefix_underscore if {
+test_success_ if {
     r := rule.report with input as ast.policy(`
     decision := {allow: true} {
         input.foo
     }
-    `)
+    decision := {allow: false} {
+        not input.foo
+    }`)
     r == set()
 }
