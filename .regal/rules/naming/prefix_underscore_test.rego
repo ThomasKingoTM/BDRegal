@@ -6,35 +6,66 @@ import future.keywords.contains
 
 import data.regal.ast
 import data.regal.config
-import custom.regal.rules.naming["prefix-underscore"] as rule
+import data.custom.regal.rules.naming["prefix-underscore"] as rule
 
 test_fail_prefix_underscore if {
     r := rule.report with input as ast.policy(
-    `decision := {"allow": true} {
+    `some_rule := true {
         input.foo
-    }`)
+    }
+    `)
     res := {
         {
-            "category": "structure",
-            "description": "Exactly two decision rules (1. allow = true, 2. allow = false) should be present in the policy.",
+            "category": "naming",
+            "description": "Non-query variables must start with an underscore.",
             "level": "error",
             "location": {
                 "col": 1,
                 "file": "policy.rego",
                 "row": 3,
-                "text": "decision := {\"allow\": true} {"
+                "text": "some_rule := true {"
             },
-            "title": "two-decision-clauses"
+            "title": "prefix_underscore"
+        }
+    }
+    r == res
+}
+
+test_fail_prefix_underscore if {
+    r := rule.report with input as ast.policy(
+    `_some_rule := true {
+        input.foo
+    }
+    some_other_rule := true {
+        input.bar
+    }
+    `)
+    res := {
+        {
+            "category": "naming",
+            "description": "Non-query variables must start with an underscore.",
+            "level": "error",
+            "location": {
+                "col": 1,
+                "file": "policy.rego",
+                "row": 6,
+                "text": "some_other_rule := true {"
+            },
+            "title": "prefix_underscore"
         }
     }
     r == res
 }
 
 
+
 test_success_prefix_underscore if {
     r := rule.report with input as ast.policy(`
     decision := {allow: true} {
         input.foo
+    }
+    _some_other_rule := true {
+        input.bar
     }
     `)
     r == set()
