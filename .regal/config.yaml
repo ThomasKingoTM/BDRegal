@@ -21,10 +21,6 @@ rules:
     two-decision-clauses:
       level: warning
   style:
-    line-max:
+    max-n-lines:
       level: warning
       max-lines: 8
-  #style:
-  #  line-length:
-  #    level: error
-  #    max-line-length: 120

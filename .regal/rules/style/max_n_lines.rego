@@ -23,7 +23,7 @@ _object_of_opening_clauses := {index: line |
 }
 
 _number_of_lines_is_less_than_specified_in_config if {
-	cfg := config.for_rule({"custom": {"category": "style"}, "title": "line-max"})
+	cfg := config.for_rule({"custom": {"category": "style"}, "title": "max-n-lines"})
 	every opening_index, _ in _object_of_opening_clauses {
 		some closing_index, closing_clause in input.regal.file.lines
 		contains(closing_clause, "}")
