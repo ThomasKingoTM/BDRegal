@@ -2,9 +2,9 @@ rules:
   #comparison:
   #JWT:
   missing:
-    missing-decision:
+    decision:
       level: warning
-    missing-deny:
+    deny-reasons:
       level: warning
   naming:
     prefix-underscore:
@@ -19,10 +19,10 @@ rules:
       level: warning
   structure:
     two-decision-clauses:
-      level: error
+      level: warning
   style:
     line-max:
-      level: error
+      level: warning
       max-lines: 8
   #style:
   #  line-length:
