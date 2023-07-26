@@ -1,9 +1,9 @@
-package p 
-
+package p
 
 allow {
-    input.x == 5
+	input.x == 5
 }
+
 else {
-    input.bar == 6
+	input.bar == 6
 }

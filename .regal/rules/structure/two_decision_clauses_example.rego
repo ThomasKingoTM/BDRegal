@@ -1,8 +1,9 @@
 package p
 
 decision := {"allow": true} {
-    input.foo
+	input.foo
 }
+
 decision := {"allow": false} {
-    not input.foo
+	not input.foo
 }

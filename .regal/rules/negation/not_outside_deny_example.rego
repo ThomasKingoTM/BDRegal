@@ -1,6 +1,5 @@
 package p
 
-
-allow := true {
-    not input.foo
+allow {
+	not input.foo
 }

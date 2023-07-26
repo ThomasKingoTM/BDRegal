@@ -1,11 +1,11 @@
-package p 
+package p
 
+import future.keywords.if
 
-import future.keywords.if 
-
-allow {
-    input.x == 5
+allow if {
+	input.x == 5
 }
+
 else if {
-    input.bar == 6
+	input.bar == 6
 }

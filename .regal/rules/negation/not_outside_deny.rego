@@ -6,8 +6,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.result
 import data.regal.ast
+import data.regal.result
 
 report contains violation if {
 	some rule in input.rules
@@ -16,5 +16,5 @@ report contains violation if {
 	rule.head.name != "_deny_reasons"
 	expr.negated == true
 
-	violation := result.fail(rego.metadata.chain(), result.location(expr)) 
+	violation := result.fail(rego.metadata.chain(), result.location(expr))
 }

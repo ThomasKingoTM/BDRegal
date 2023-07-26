@@ -1,9 +1,9 @@
 package p
 
+_some_rule {
+	input.foo
+}
 
-_some_rule := true {
-        input.foo
-    } 
-some_other_rule := true {
-        input.bar
+some_other_rule {
+	input.bar
 }

@@ -1,5 +1,5 @@
 package p
 
-some_rule := true {
-    input.foo
+some_rule {
+	input.foo
 }
