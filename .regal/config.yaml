@@ -1,0 +1,30 @@
+rules:
+  #comparison:
+  #JWT:
+  missing:
+    missing-decision:
+      level: warning
+    missing-deny:
+      level: warning
+  naming:
+    prefix-underscore:
+      level: warning
+  negation:
+    not-outside-deny:
+      level: warning
+  safety:
+    disallow-else:
+      level: warning
+    else-if:
+      level: warning
+  structure:
+    two-decision-clauses:
+      level: error
+  style:
+    line-max:
+      level: error
+      max-lines: 8
+  #style:
+  #  line-length:
+  #    level: error
+  #    max-line-length: 120

@@ -11,7 +11,7 @@ import data.regal.result
 
 report contains violation if {
 	cfg := config.for_rule({"custom": {"category": "style"}, "title": "line-length"})
-
+	print(cfg)
 	some i, line in input.regal.file.lines
 
 	line_length := count(line)

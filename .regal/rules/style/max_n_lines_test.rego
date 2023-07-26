@@ -1,4 +1,4 @@
-package custom.regal.rules.style["max-8-lines_test"]
+package custom.regal.rules.style["max-n-lines_test"]
 
 import future.keywords.if
 import future.keywords.in
@@ -6,7 +6,7 @@ import future.keywords.contains
 
 import data.regal.ast
 import data.regal.config
-import data.custom.regal.rules.style["max-8-lines"] as rule
+import data.custom.regal.rules.style["max-n-lines"] as rule
 
 test_fail_max_8_lines if {
     r := rule.report with input as ast.policy(
@@ -21,10 +21,11 @@ test_fail_max_8_lines if {
         input.foo
         input.foo
     }`)
+    with config.for_rule as {"level": "error", "max-lines": 8}
     res := {
         {
             "category": "style",
-            "description": "Rules must be maximum 8 lines in length.",
+            "description": "Rules must adhere to the maximum number of lines (max-lines) specified in config.yaml.",
             "level": "error",
             "location": {
                 "col": 1,
@@ -32,7 +33,7 @@ test_fail_max_8_lines if {
                 "row": 3,
                 "text": "decision := {\"allow\": true} {"
             },
-            "title": "max-8-lines"
+            "title": "max-n-lines"
         }
     }
     r == res
@@ -54,5 +55,6 @@ test_success_max_8_lines if {
         input.foo
         input.foo
     }`)
+    with config.for_rule as {"level": "error", "max-lines": 8}
     r == set()
 }
