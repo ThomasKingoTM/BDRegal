@@ -85,5 +85,6 @@ func InputFromPaths(paths []string) (Input, error) {
 func AllGoRules(conf config.Config) []Rule {
 	return []Rule{
 		NewOpaFmtRule(conf),
+		NewMaskingRule(conf),
 	}
 }
