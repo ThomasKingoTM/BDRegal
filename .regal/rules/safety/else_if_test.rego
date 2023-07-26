@@ -8,7 +8,7 @@ import data.custom.regal.rules.safety["else-if"] as rule
 
 test_fail_else_if if {
 	r := rule.report with input as ast.policy(
-    `allow {
+    `_allow {
         input.x == 5
     }
     else {
@@ -29,7 +29,7 @@ test_fail_else_if if {
 test_fail_else_if_imported if {
     r := rule.report with input as ast.policy(
     `import future.keywords.if
-    allow {
+    _allow {
         input.x == 5
     }
     else {
@@ -71,7 +71,7 @@ test_fail_else_if_imported if {
 test_success_else_if if {
     r := rule.report with input as ast.policy(`
     import future.keywords.if
-    allow {
+    _allow {
         input.x == 5
     }
     else if {

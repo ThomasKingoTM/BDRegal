@@ -25,7 +25,7 @@ test_fail_missing_deny_reasons if {
 
 test_success_deny_reasons_present if {
     r := rule.report with input as ast.policy(`
-    deny_reasons := true {
+    _deny_reasons := true {
         input.foo
     }`)
     r == set()

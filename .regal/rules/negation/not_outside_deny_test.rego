@@ -8,7 +8,7 @@ import data.custom.regal.rules.negation["not-outside-deny"] as rule
 
 test_fail_not_outside_deny if {
     r := rule.report with input as ast.policy(`
-    allow := true {
+    _allow := true {
         not input.foo
     }`)
     res := {
@@ -30,7 +30,7 @@ test_fail_not_outside_deny if {
     
 test_success_not_in_deny if {
     r := rule.report with input as ast.policy(`
-        deny := true {
+        _deny_reasons := true {
             not input.foo
     }`)
     r == set()

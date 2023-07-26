@@ -11,7 +11,7 @@ import data.regal.result
 
 report contains violation if {
     every rule in input.rules{
-        rule.head.name != "deny_reasons"
+        rule.head.name != "_deny_reasons"
     }
     violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
 }

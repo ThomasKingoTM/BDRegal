@@ -13,7 +13,7 @@ report contains violation if {
 	some rule in input.rules
 	some expr in rule.body
 
-	rule.head.name != "deny"
+	rule.head.name != "_deny_reasons"
 	expr.negated == true
 
 	violation := result.fail(rego.metadata.chain(), result.location(expr)) 

@@ -8,7 +8,7 @@ import data.custom.regal.rules.safety["disallow-else"] as rule
 
 test_fail_disallow_else if {
 	r := rule.report with input as ast.policy(
-    `allow {
+    `_allow := true {
         input.x == 5
     }
     else {
@@ -19,7 +19,7 @@ test_fail_disallow_else if {
             "category": "safety",
             "description": "Else keyword not allowed",
             "level": "error",
-            "location": {"col": 1, "file": "policy.rego", "row": 3, "text": "allow {"},
+            "location": {"col": 1, "file": "policy.rego", "row": 3, "text": "_allow := true {"},
             "title": "disallow-else"
         }
     }
@@ -28,10 +28,10 @@ test_fail_disallow_else if {
 
 test_success_disallow_else if {
     r := rule.report with input as ast.policy(`
-    some_rule := true {
+    _some_rule := true {
         input.foo
     }
-    some_rule := false {
+    _some_rule := false {
         not input.foo
     }`)
     r == set()
