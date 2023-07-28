@@ -1,5 +1,7 @@
 rules:
   bugs:
+    masking-of-jwt:
+      level: error
     constant-condition:
       level: error
     invalid-metadata-attribute:
