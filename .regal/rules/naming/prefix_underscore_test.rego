@@ -25,8 +25,6 @@ test_fail_prefix_underscore if {
 		},
 		"title": "prefix-underscore",
 	}}
-	print(r)
-	print(res)
 	r == res
 }
 

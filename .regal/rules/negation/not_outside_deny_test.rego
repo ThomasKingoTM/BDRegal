@@ -23,8 +23,6 @@ test_fail_not_outside_deny if {
 		},
 		"title": "not-outside-deny",
 	}}
-	print(r)
-	print(res)
 	r == res
 }
 
