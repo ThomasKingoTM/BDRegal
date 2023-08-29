@@ -22,7 +22,6 @@ import (
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/reporter"
-	"github.com/styrainc/regal/pkg/rules"
 )
 
 type lintCommandParams struct {
@@ -120,7 +119,7 @@ func init() {
 	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
 		"set path of configuration file")
 	lintCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
-		"set output format (pretty, compact, json)")
+		"set output format (pretty, compact, json, github)")
 	lintCommand.Flags().StringVarP(&params.outputFile, "output-file", "o", "",
 		"set file to use for linting output, defaults to stdout")
 	lintCommand.Flags().StringVarP(&params.failLevel, "fail-level", "l", "error",
@@ -218,7 +217,8 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		WithDisabledRules(params.disable.v...).
 		WithEnableAll(params.enableAll).
 		WithEnabledCategories(params.enableCategory.v...).
-		WithEnabledRules(params.enable.v...)
+		WithEnabledRules(params.enable.v...).
+		WithInputPaths(args)
 
 	if customRulesDir != "" {
 		regal = regal.WithCustomRules([]string{customRulesDir})
@@ -232,26 +232,26 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		regal = regal.WithIgnore(params.ignoreFiles.v)
 	}
 
-	userConfig, err := readUserConfig(params, regalDir)
-	if err == nil {
-		defer rio.CloseFileIgnore(userConfig)
+	var userConfig config.Config
 
-		configData := make(map[string]any)
-		if err := yaml.NewDecoder(userConfig).Decode(&configData); err != nil {
-			return report.Report{}, fmt.Errorf("failed to decode user config from %s: %w", regalDir.Name(), err)
+	userConfigFile, err := readUserConfig(params, regalDir)
+	if err == nil {
+		defer rio.CloseFileIgnore(userConfigFile)
+
+		if err := yaml.NewDecoder(userConfigFile).Decode(&userConfig); err != nil {
+			if regalDir != nil {
+				return report.Report{}, fmt.Errorf("failed to decode user config from %s: %w", regalDir.Name(), err)
+			}
+
+			return report.Report{}, fmt.Errorf("failed to decode user config: %w", err)
 		}
 
-		regal = regal.WithUserConfig(configData)
+		regal = regal.WithUserConfig(userConfig)
 	}
 
-	input, err := rules.InputFromPaths(args)
+	result, err := regal.Lint(ctx)
 	if err != nil {
-		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
-	}
-
-	result, err := regal.Lint(ctx, input)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("error(s) ecountered while linting: %w", err)
+		return report.Report{}, fmt.Errorf("error(s) encountered while linting: %w", err)
 	}
 
 	rep, err := getReporter(params.format, outputWriter)
@@ -272,6 +272,8 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 		return reporter.NewCompactReporter(outputWriter), nil
 	case formatJSON:
 		return reporter.NewJSONReporter(outputWriter), nil
+	case formatGitHub:
+		return reporter.NewGitHubReporter(outputWriter), nil
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}

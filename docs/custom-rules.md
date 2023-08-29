@@ -1,10 +1,18 @@
 # Custom Rules
 
-Regal is built to be easily extended. Creating custom rules is a great way to enforce naming conventions, best practices
-or more opinionated rules across teams and organizations. If you'd like to provide your own linter rules for a project,
-you may do so by placing them in a `rules` directory inside the `.regal` directory preferably placed in the root of your
-project (which is also where custom configuration resides). The directory structure of a policy repository with custom
-linter rules might then look something like this:
+Regal is built to be easily extended. Using custom rules is a great way to enforce naming conventions, best practices
+or more opinionated rules across teams and organizations.
+
+There are two types of custom rules to be aware of — those that are included with Regal in the `custom` category, and
+those that you write yourself. The rules in the `custom` category provide a way to enforce common organizational
+requirements, like naming conventions, by means of _configuration_ rather than code. If your requirements aren't
+fulfilled by the rules in this category, your other option is to write your own custom rules using Rego.
+
+## Your Own Custom Rules
+
+If you'd like to provide your own linter rules for a project, you may do so by placing them in a `rules` directory
+inside the `.regal` directory preferably placed in the root of your project (which is also where custom configuration
+resides). The directory structure of a policy repository with custom linter rules might then look something like this:
 
 ```text
 .
@@ -20,6 +28,26 @@ linter rules might then look something like this:
 
 If you so prefer, custom rules may also be provided using the `--rules` option for `regal lint`, which may point either
 to a Rego file, or a directory containing Rego files and potentially data (JSON or YAML).
+
+## Creating a New Rule
+
+The simplest way to create a new rule is to use the `regal new rule` command. This command provides scaffolding for
+quickly creating a new rule, including a file for testing. The command has two required arguments: `--category` and
+`--name`, which should be self-explanatory. To create a new custom rule:
+
+```shell
+regal new rule --category naming --name foo-bar-baz
+```
+
+This will create a `.regal/rules` directory in the current working directory, if one does not already exist, and place
+a directory named after `--category` in it, where it will place a policy for the rule, and another one to test it. If
+you'd rather create this directory structure in some other place than the current working directory, you may use the
+`--output` flag to specify a different location. The generated rule includes a simple example, which can be verified by
+running `regal test .regal/rules/${category}`. Modify the rule and the test to suit your needs!
+
+If you'd like to create a new built-in rule for submitting a PR in Regal, you may add the `--type builtin` flag to the
+command (the default is `custom`). This will create a similar scaffolding under `bundle/regal/rules` in the Regal
+repository.
 
 ## Developing Rules
 
@@ -132,7 +160,7 @@ Starting from top to bottom, these are the components comprising our custom rule
    starts with `acme.corp`, and another rule (`system_log_package`) to know if it starts with `system.log`. If neither
    of the conditions are true, the rule fails and violation is created.
 1. The violation is created by calling `result.fail`, which takes the metadata from the package (using
-   `rego.metadata.chain` which conveniently also includes the path of the package) and returns a result, which 
+   `rego.metadata.chain` which conveniently also includes the path of the package) and returns a result, which
    will later be included in the final report provided by Regal.
 1. The `result.location` helps extract the location from the element failing the test. Make sure to use it!
 
@@ -170,3 +198,8 @@ but with newlines and spaces added for a more pleasant experience.
 In addition to this, Regal provides many helpful functions, rules and utilities in Rego. Browsing the source code of the
 [regal.ast](https://github.com/StyraInc/regal/blob/main/bundle/regal/ast.rego) package to see what's available is
 recommended!
+
+## Community
+
+If you'd like to discuss custom rules development or just talk about Regal in general, please join us in the `#regal`
+channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
