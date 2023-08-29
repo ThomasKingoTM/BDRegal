@@ -22,23 +22,7 @@ report contains violation if {
 	some term in body.terms
 	some value in term.value
 	
-
-	# print(input.rules[0].body[0].terms[0].value[0].value)
-
-	# Dangerous comparison operator
 	value.value in danger_set
-	
-	# Find the type of one side of the operator
-	type_one := body.terms[1].type
-	# some other_term in body.terms
-	# some type_one in other_term 
-
-	# Find the type of the other side of the operator
-	type_two := body.terms[2].type
-	# some third_term in body.terms
-	# some type_two in third_term
-
-	type_one != type_two
 
 	violation := result.fail(rego.metadata.chain(), result.location(value))
 }

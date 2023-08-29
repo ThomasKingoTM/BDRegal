@@ -1,7 +1,7 @@
 package comparison
 
 decision := true {
-    "1" > 1
+    input.bar > input.what
     1 < "1"
     "1" >= 1
     1 <= "1"
