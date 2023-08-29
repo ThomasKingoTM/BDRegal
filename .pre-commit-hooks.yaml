@@ -1,0 +1,20 @@
+- id: regal-lint
+  language: golang
+  name: policy file linting
+  description: policy file linting with Regal from Styra built from source
+  entry: regal lint
+  files: (\.rego)$
+
+- id: regal-lint-use-path
+  language: system
+  name: policy file linting
+  description: policy file linting with Regal from Styra using system $PATH
+  entry: regal lint
+  files: (\.rego)$
+
+- id: regal-download
+  language: script
+  name: policy file linting
+  description: policy file linting with Regal downloaded from Github
+  entry: build/download-and-run.sh lint
+  files: (\.rego)$

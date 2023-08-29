@@ -38,7 +38,7 @@ test_allow_if_admin {
 
 While OPA's test runner will evaluate any rules with a `test_` prefix, it is a good practice to clearly separate tests
 from production policy. This is easily done by placing tests in a separate package with a `_test` suffix, and correctly
-[naming](#./file-missing-test-suffix.md) the test files.
+[naming](./file-missing-test-suffix.md) the test files.
 
 ## Configuration Options
 
@@ -55,3 +55,9 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Policy Testing](https://www.openpolicyagent.org/docs/latest/policy-testing/)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

@@ -8,6 +8,7 @@
 ```rego
 package policy
 
+import future.keywords.in
 import future.keywords.if
 
 # This is always redundant
@@ -27,6 +28,9 @@ allow if {
 ```rego
 package policy
 
+import future.keywords.in
+import future.keywords.if
+
 allow if "admin" in input.user.roles
 
 allow if {
@@ -35,7 +39,11 @@ allow if {
 }
 ```
 
-**Exceptions**
+## Rationale
+
+Using an import for `input` is not necessary, as both `input` and `data` are globally available.
+
+## Exceptions
 
 Using an alias for `input` can sometimes be useful, e.g. when using `input` is known to represent something specific,
 like a Terraform plan. Aliasing of specific input attributes should however be avoided in favor of local assignments.
@@ -58,16 +66,12 @@ allow if {
 }
 ```
 
-## Rationale
-
-Using an import for `input` is not necessary, as both `input` and `data` are globally available. 
-
 ## Configuration Options
 
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     avoid-importing-input:
       # one of "error", "warning", "ignore"
@@ -78,3 +82,9 @@ rules:
 
 - Rego Style Guide: [Avoid importing `input`](https://github.com/StyraInc/rego-style-guide#avoid-importing-input)
 - OPA docs: [Terraform Tutorial](https://www.openpolicyagent.org/docs/latest/terraform)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

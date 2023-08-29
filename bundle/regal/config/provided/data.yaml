@@ -1,5 +1,7 @@
 rules:
   bugs:
+    masking-of-jwt:
+      level: error
     constant-condition:
       level: error
     invalid-metadata-attribute:
@@ -19,6 +21,15 @@ rules:
       level: error
     custom-in-construct:
       level: error
+    non-raw-regex-pattern:
+      level: error
+    use-in-operator:
+      level: error
+    use-some-for-output-vars:
+      level: error
+  custom:
+    naming-convention:
+      level: ignore
   imports:
     avoid-importing-input:
       level: error
@@ -48,13 +59,14 @@ rules:
       level: error
     prefer-snake-case:
       level: error
+    prefer-some-in-iteration:
+      level: error
+      ignore-nesting-level: 2
     todo-comment:
       level: error
     unconditional-assignment:
       level: error
     use-assignment-operator:
-      level: error
-    use-in-operator:
       level: error
   testing:
     file-missing-test-suffix:

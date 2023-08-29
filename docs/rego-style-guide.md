@@ -52,32 +52,33 @@ determine whether the author has done, and both have valid use cases.
 ## Variables and Data Types
 
 - [x] Use `in` to check for membership
-- [ ] Prefer some .. in for iteration
+- [x] Prefer some .. in for iteration
 - [ ] Use every to express FOR ALL
 - [ ] Don't use unification operator for assignment or comparison
-- [ ] Don't use undeclared variables
+- [x] Don't use undeclared variables
 - [x] ~~Prefer sets over arrays (where applicable)~~
 
 ### Notes
 Almost all of these should be doable, with some possibly being quite challenging.
 One that could be very hard to implement is the `every` rule, as that would
 require us to determine what **other** method was used and that `every` is a
-suitable replacement. With the exception of "Use `in` to check for membership",
+suitable replacement. Except for "Use `in` to check for membership",
 none of the above rules can be enforced using the AST alone.
 
 ## Functions
 
 - [x] Prefer using arguments over input and data
-- [ ] Avoid using the last argument for the return value
+- [x] Avoid using the last argument for the return value
 
 ## Regex
 
-- [ ] Use raw strings for regex patterns
+- [x] Use raw strings for regex patterns
 
 ### Notes
 Can only be done by scanning the original code, as this is lost in the AST.
 
 ## Imports
+
 - [x] Use explicit imports for future keywords
 - [ ] Prefer importing packages over rules and functions
 - [x] Avoid importing input

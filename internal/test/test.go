@@ -45,3 +45,15 @@ func InputPolicy(filename string, policy string) rules.Input {
 
 	return rules.NewInput(content, modules)
 }
+
+func InputBundle(policyBundle map[string]string) rules.Input {
+	content := make(map[string]string)
+	modules := make(map[string]*ast.Module)
+
+	for filename, filecontent := range policyBundle {
+		content[filename] = filecontent
+		modules[filename] = parse.MustParseModule(filecontent)
+	}
+
+	return rules.NewInput(content, modules)
+}

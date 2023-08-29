@@ -519,6 +519,20 @@
       "type": "string"
     }
   },
+  "crypto.parse_private_keys": {
+    "args": [
+      {
+        "description": "PEM encoded data containing one or more private keys as concatenated blocks. Optionally Base64 encoded.",
+        "name": "keys",
+        "type": "string"
+      }
+    ],
+    "result": {
+      "description": "parsed private keys represented as objects",
+      "name": "output",
+      "type": "array[object[string: any]]"
+    }
+  },
   "crypto.sha1": {
     "args": [
       {
