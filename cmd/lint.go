@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -32,6 +31,7 @@ type lintCommandParams struct {
 	failLevel       string
 	rules           repeatedStringFlag
 	noColor         bool
+	debug           bool
 	disable         repeatedStringFlag
 	disableAll      bool
 	disableCategory repeatedStringFlag
@@ -130,6 +130,8 @@ func init() {
 		"set custom rules file(s). This flag can be repeated.")
 	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0,
 		"set timeout for linting (default unlimited)")
+	lintCommand.Flags().BoolVar(&params.debug, "debug", false,
+		"enable debug logging (including print output from custom policy)")
 
 	lintCommand.Flags().VarP(&params.disable, "disable", "d",
 		"disable specific rule(s). This flag can be repeated.")
@@ -172,14 +174,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 	}
 
-	// Create new fs from root of bundle, to avoid having to deal with
-	// "bundle" in paths (i.e. `data.bundle.regal`)
-	bfs, err := fs.Sub(embeds.EmbedBundleFS, "bundle")
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed reading embedded bundle %w", err)
-	}
-
-	regalRules := rio.MustLoadRegalBundleFS(bfs)
+	regalRules := rio.MustLoadRegalBundleFS(embeds.EmbedBundleFS)
 
 	var regalDir *os.File
 
@@ -218,6 +213,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		WithEnableAll(params.enableAll).
 		WithEnabledCategories(params.enableCategory.v...).
 		WithEnabledRules(params.enable.v...).
+		WithDebugMode(params.debug).
 		WithInputPaths(args)
 
 	if customRulesDir != "" {
@@ -235,8 +231,12 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	var userConfig config.Config
 
 	userConfigFile, err := readUserConfig(params, regalDir)
-	if err == nil {
+	if err == nil { //nolint:nestif
 		defer rio.CloseFileIgnore(userConfigFile)
+
+		if params.debug {
+			log.Printf("found user config file: %s", userConfigFile.Name())
+		}
 
 		if err := yaml.NewDecoder(userConfigFile).Decode(&userConfig); err != nil {
 			if regalDir != nil {
@@ -247,6 +247,8 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 
 		regal = regal.WithUserConfig(userConfig)
+	} else if params.debug {
+		log.Println("no user-provided config file found, will use the default config")
 	}
 
 	result, err := regal.Lint(ctx)

@@ -10,7 +10,7 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
-cfg := config.for_rule({"custom": {"category": "custom"}, "title": "naming-convention"})
+cfg := config.for_rule("custom", "naming-convention")
 
 # target: package
 report contains violation if {
@@ -40,13 +40,13 @@ report contains violation if {
 	some rule in input.rules
 
 	not rule.head.args
-	not regex.match(convention.pattern, rule.head.name)
+	not regex.match(convention.pattern, ast.name(rule))
 
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
 			"Naming convention violation: rule name %q does not match pattern %q",
-			[rule.head.name, convention.pattern],
+			[ast.name(rule), convention.pattern],
 		),
 	)
 }
@@ -61,13 +61,13 @@ report contains violation if {
 	some rule in input.rules
 
 	rule.head.args
-	not regex.match(convention.pattern, rule.head.name)
+	not regex.match(convention.pattern, ast.name(rule))
 
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
 			"Naming convention violation: function name %q does not match pattern %q",
-			[rule.head.name, convention.pattern],
+			[ast.name(rule), convention.pattern],
 		),
 	)
 }

@@ -48,6 +48,9 @@ rules:
       level: error
     external-reference:
       level: error
+    file-length:
+      level: error
+      max-file-length: 500
     function-arg-return:
       level: error
     line-length:
@@ -72,6 +75,8 @@ rules:
     file-missing-test-suffix:
       level: error
     identically-named-tests:
+      level: error
+    metasyntactic-variable:
       level: error
     print-or-trace-call:
       level: error
