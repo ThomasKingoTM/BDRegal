@@ -3,29 +3,29 @@ rules:
   #JWT:
   comparison:
     type-comparison:
-      level: ignore
+      level: error
   missing:
     decision:
-      level: ignore
+      level: error
     deny-reasons:
-      level: ignore
+      level: error
   naming:
     prefix-underscore:
-      level: ignore
+      level: error
   negation:
     not-outside-deny:
-      level: ignore
+      level: error
   obsolete: 
     max-n-lines:
-      level: ignore
+      level: error
       max-lines: 8
   safety:
     disallow-else:
-      level: ignore
+      level: error
     else-if:
-      level: ignore
+      level: error
   structure:
     two-decision-clauses:
-      level: ignore
+      level: error
 
   
