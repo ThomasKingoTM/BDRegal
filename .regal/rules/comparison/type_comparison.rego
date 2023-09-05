@@ -13,15 +13,16 @@ import data.regal.result
 report contains violation if {
 	set_of_dangerous_comparison_operators := {"<", "<=", ">", ">="}
 	set_of_dangerous_comparison_operator_names := {"lt", "le", "gt", "ge"}
-	set_of_dangerous_comparison_operator_unicodes := {"\u003c", "\u003c", "\u003e=", "\u003c="}
+	set_of_dangerous_comparison_operator_unicodes := {"<", ">=", "<="}
 
-	danger_set := set_of_dangerous_comparison_operators | set_of_dangerous_comparison_operator_names | set_of_dangerous_comparison_operator_unicodes
-	
+	# regal ignore:line-length
+	danger_set := (set_of_dangerous_comparison_operators | set_of_dangerous_comparison_operator_names) | set_of_dangerous_comparison_operator_unicodes
+
 	some rule in input.rules
-	some body in rule.body 
+	some body in rule.body
 	some term in body.terms
 	some value in term.value
-	
+
 	value.value in danger_set
 
 	violation := result.fail(rego.metadata.chain(), result.location(value))

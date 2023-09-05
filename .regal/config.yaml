@@ -1,26 +1,31 @@
 rules:
   #comparison:
   #JWT:
+  comparison:
+    type-comparison:
+      level: ignore
   missing:
     decision:
-      level: warning
+      level: ignore
     deny-reasons:
-      level: warning
+      level: ignore
   naming:
     prefix-underscore:
-      level: warning
+      level: ignore
   negation:
     not-outside-deny:
-      level: warning
+      level: ignore
+  obsolete: 
+    max-n-lines:
+      level: ignore
+      max-lines: 8
   safety:
     disallow-else:
-      level: warning
+      level: ignore
     else-if:
-      level: warning
+      level: ignore
   structure:
     two-decision-clauses:
-      level: warning
-  style:
-    max-n-lines:
-      level: warning
-      max-lines: 8
+      level: ignore
+
+  

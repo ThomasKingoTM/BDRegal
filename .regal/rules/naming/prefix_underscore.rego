@@ -1,4 +1,4 @@
-# METADATA 
+# METADATA
 # description: Non-query variables must start with an underscore.
 package custom.regal.rules.naming["prefix-underscore"]
 

@@ -1,10 +1,10 @@
-package custom.regal.rules.style["max-n-lines_test"]
+package custom.regal.rules.obsolete["max-n-lines_test"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.custom.regal.rules.style["max-n-lines"] as rule
+import data.custom.regal.rules.obsolete["max-n-lines"] as rule
 import data.regal.ast
 import data.regal.config
 
