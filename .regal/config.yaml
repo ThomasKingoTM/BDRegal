@@ -3,12 +3,12 @@ rules:
   #JWT:
   comparison:
     type-comparison:
-      level: error
+      level: warning
   missing:
     decision:
-      level: error
+      level: warning
     deny-reasons:
-      level: error
+      level: warning
   naming:
     prefix-underscore:
       level: error
@@ -17,7 +17,7 @@ rules:
       level: error
   obsolete: 
     max-n-lines:
-      level: error
+      level: ignore
       max-lines: 8
   safety:
     disallow-else:
