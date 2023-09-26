@@ -12,7 +12,7 @@ import data.regal.result
 
 report contains violation if {
 	set_of_dangerous_comparison_operators := {"<", "<=", ">", ">="}
-	set_of_dangerous_comparison_operator_names := {"lt", "le", "gt", "ge"}
+	set_of_dangerous_comparison_operator_names := {"lt", "lte", "gt", "gte"}
 	set_of_dangerous_comparison_operator_unicodes := {"<", ">=", "<="}
 
 	# regal ignore:line-length
