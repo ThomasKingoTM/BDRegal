@@ -73,7 +73,6 @@ import future.keywords.in
 ]))
 
 _find_nested_vars(obj) := [value |
-	# regal ignore:function-arg-return
 	walk(obj, [_, value])
 	value.type == "var"
 	indexof(value.value, "$") == -1
@@ -141,7 +140,6 @@ _find_every_vars(_, value) := var if {
 }
 
 _find_term_vars(term) := [value |
-	# regal ignore:function-arg-return
 	walk(term, [_, value])
 
 	value.type == "var"
@@ -191,7 +189,6 @@ _find_vars(_, value, _) := _find_object_comprehension_vars(value) if {
 }
 
 find_some_decl_vars(rule) := [var |
-	# regal ignore:function-arg-return
 	walk(rule, [path, value])
 
 	regal.last(path) == "symbols"
@@ -205,7 +202,6 @@ find_some_decl_vars(rule) := [var |
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all variables declared via assignment (:=), `some`, `every` and in comprehensions
 find_vars(node) := [var |
-	# regal ignore:function-arg-return
 	walk(node, [path, value])
 
 	some var in _find_vars(path, value, regal.last(path))
@@ -267,20 +263,38 @@ is_output_var(rule, ref, location) if {
 	not ref.value in (find_names_in_scope(rule, location) - find_some_decl_names_in_scope(rule, location))
 }
 
-# METADATA
-# description: |
-#   traverses all nodes under provided node (using `walk`), and returns an array with
-#   all calls to builtin functions
-find_builtin_calls(node) := [value |
-	# regal ignore:function-arg-return
-	walk(node, [path, value])
+all_refs := [value.value |
+	walk(input.rules, [_, value])
 
-	regal.last(path) == "terms"
-
-	value[0].type == "ref"
-	value[0].value[0].type == "var"
-	value[0].value[0].value in builtin_names
+	value.type == "ref"
 ]
+
+ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
+
+_ref_part_to_string(0, ref) := ref.value
+
+_ref_part_to_string(_, ref) := ref.value if ref.type == "string"
+
+_ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
+	ref.type != "string"
+	i > 0
+}
+
+# METADATA
+# description: provides a set of all built-in function calls made in input policy
+builtin_functions_called contains name if {
+	some ref in all_refs
+
+	ref[0].type == "var"
+	not ref[0].value in {"input", "data"}
+
+	name := concat(".", [value |
+		some part in ref
+		value := part.value
+	])
+
+	name in builtin_names
+}
 
 # METADATA
 # description: |
@@ -339,6 +353,21 @@ implicit_boolean_assignment(rule) if {
 all_functions := object.union(opa.builtins, function_decls(input.rules))
 
 all_function_names := object.keys(all_functions)
+
+# METADATA
+# description: |
+#   true if rule head contains no identifier, but is a chained rule body immediately following the previous one:
+#   foo {
+#       input.bar
+#   } {	# <-- chained rule body
+#       input.baz
+#   }
+is_chained_rule_body(rule, lines) if {
+	row_text := lines[rule.head.location.row - 1]
+	col_text := substring(row_text, rule.head.location.col - 1, -1)
+
+	startswith(col_text, "{")
+}
 
 comments_decoded := [decoded |
 	some comment in input.comments

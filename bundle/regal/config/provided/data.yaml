@@ -16,6 +16,12 @@ rules:
       level: error
     unused-return-value:
       level: error
+  custom:
+    forbidden-function-call:
+      level: ignore
+      forbidden-functions: []
+    naming-convention:
+      level: ignore
   idiomatic:
     custom-has-key-construct:
       level: error
@@ -27,9 +33,6 @@ rules:
       level: error
     use-some-for-output-vars:
       level: error
-  custom:
-    naming-convention:
-      level: ignore
   imports:
     avoid-importing-input:
       level: error
@@ -44,6 +47,8 @@ rules:
   style:
     avoid-get-and-list-prefix:
       level: error
+    chained-rule-body:
+      level: error
     detached-metadata:
       level: error
     external-reference:
@@ -53,6 +58,8 @@ rules:
       max-file-length: 500
     function-arg-return:
       level: error
+      except-functions:
+        - walk
     line-length:
       level: error
       max-line-length: 120
@@ -72,6 +79,8 @@ rules:
     use-assignment-operator:
       level: error
   testing:
+    dubious-print-sprintf:
+      level: error
     file-missing-test-suffix:
       level: error
     identically-named-tests:

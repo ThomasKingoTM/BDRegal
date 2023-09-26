@@ -15,10 +15,14 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
+	"github.com/open-policy-agent/opa/metrics"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
+	"github.com/open-policy-agent/opa/topdown/print"
 
+	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
+	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
@@ -36,6 +40,7 @@ type Linter struct {
 	customRulesPaths []string
 	combinedConfig   *config.Config
 	debugMode        bool
+	printHook        print.Hook
 	disable          []string
 	disableAll       bool
 	disableCategory  []string
@@ -43,13 +48,22 @@ type Linter struct {
 	enableAll        bool
 	enableCategory   []string
 	ignoreFiles      []string
+	metrics          metrics.Metrics
 }
+
+type QueryInputBuilder func(name string, content string, module *ast.Module) (map[string]any, error)
+
+type ReportCollector func(report report.Report)
 
 const regalUserConfig = "regal_user_config"
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
-	return Linter{}
+	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
+
+	return Linter{
+		ruleBundles: []*bundle.Bundle{&regalRules},
+	}
 }
 
 // WithInputPaths sets the inputPaths to lint. Note that these will be
@@ -151,11 +165,26 @@ func (l Linter) WithIgnore(ignore []string) Linter {
 	return l
 }
 
+// WithMetrics enables metrics collection.
+func (l Linter) WithMetrics(m metrics.Metrics) Linter {
+	l.metrics = m
+
+	return l
+}
+
+func (l Linter) WithPrintHook(printHook print.Hook) Linter {
+	l.printHook = printHook
+
+	return l
+}
+
 var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
-	aggregate := report.Report{}
+	l.startTimer(regalmetrics.RegalLint)
+
+	aggregateReport := report.Report{}
 
 	if len(l.inputPaths) == 0 && l.inputModules == nil {
 		return report.Report{}, errors.New("nothing provided to lint")
@@ -174,19 +203,28 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		ignore = l.ignoreFiles
 	}
 
+	l.startTimer(regalmetrics.RegalFilterIgnoredFiles)
+
 	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
+
+	l.stopTimer(regalmetrics.RegalFilterIgnoredFiles)
+	l.startTimer(regalmetrics.RegalInputParse)
 
 	inputFromPaths, err := rules.InputFromPaths(filtered)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
+	l.stopTimer(regalmetrics.RegalInputParse)
+
 	input := inputFromPaths
 
 	if l.inputModules != nil {
+		l.startTimer(regalmetrics.RegalFilterIgnoredModules)
+
 		filteredPaths, err := config.FilterIgnoredPaths(l.inputModules.FileNames, ignore, false)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to filter paths: %w", err)
@@ -197,6 +235,8 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 			input.Modules[filename] = l.inputModules.Modules[filename]
 			input.FileContent[filename] = l.inputModules.FileContent[filename]
 		}
+
+		l.stopTimer(regalmetrics.RegalFilterIgnoredModules)
 	}
 
 	goReport, err := l.lintWithGoRules(ctx, input)
@@ -204,26 +244,45 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
 	}
 
-	aggregate.Violations = append(aggregate.Violations, goReport.Violations...)
+	aggregateReport.Violations = append(aggregateReport.Violations, goReport.Violations...)
 
-	regoReport, err := l.lintWithRegoRules(ctx, input)
+	var aggregates []report.Aggregate
+
+	if len(input.Modules) > 1 {
+		// No need to collect aggregates if there's only one file
+		aggregates, err = l.collectAggregates(ctx, input)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed to collect aggregates using Rego rules: %w", err)
+		}
+	}
+
+	regoReport, err := l.lintWithRegoRules(ctx, input, aggregates)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
 
-	aggregate.Violations = append(aggregate.Violations, regoReport.Violations...)
+	aggregateReport.Violations = append(aggregateReport.Violations, regoReport.Violations...)
 
-	aggregate.Summary = report.Summary{
+	aggregateReport.Summary = report.Summary{
 		FilesScanned:  len(input.FileNames),
-		FilesFailed:   len(aggregate.ViolationsFileCount()),
+		FilesFailed:   len(aggregateReport.ViolationsFileCount()),
 		FilesSkipped:  0,
-		NumViolations: len(aggregate.Violations),
+		NumViolations: len(aggregateReport.Violations),
 	}
 
-	return aggregate, nil
+	if l.metrics != nil {
+		l.metrics.Timer(regalmetrics.RegalLint).Stop()
+
+		aggregateReport.Metrics = l.metrics.All()
+	}
+
+	return aggregateReport, nil
 }
 
 func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+	l.startTimer(regalmetrics.RegalLintGo)
+	defer l.stopTimer(regalmetrics.RegalLintGo)
+
 	goRules, err := l.enabledGoRules()
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to get configured Go rules: %w", err)
@@ -249,9 +308,15 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 }
 
 func inputForRule(input rules.Input, rule rules.Rule) (rules.Input, error) {
-	ignore := rule.Config().Ignore.Files
+	ignore := rule.Config().Ignore
 
-	return filterInputFiles(input, ignore)
+	var ignoreFiles []string
+
+	if ignore != nil {
+		ignoreFiles = ignore.Files
+	}
+
+	return filterInputFiles(input, ignoreFiles)
 }
 
 func filterInputFiles(input rules.Input, ignore []string) (rules.Input, error) {
@@ -363,7 +428,7 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 	}
 }
 
-func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
+func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 	var regoArgs []func(*rego.Rego)
 
 	roots := []string{"eval"}
@@ -374,6 +439,7 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	}
 
 	regoArgs = append(regoArgs,
+		rego.Metrics(l.metrics),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal_eval_params", &dataBundle),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
@@ -381,10 +447,14 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	)
 
-	if l.debugMode {
+	if l.debugMode && l.printHook == nil {
+		l.printHook = topdown.NewPrintHook(os.Stderr)
+	}
+
+	if l.printHook != nil {
 		regoArgs = append(regoArgs,
 			rego.EnablePrintStatements(true),
-			rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+			rego.PrintHook(l.printHook),
 		)
 	}
 
@@ -410,11 +480,16 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	return regoArgs
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+func (l Linter) lintWithRegoRules(
+	ctx context.Context, input rules.Input, aggregates []report.Aggregate,
+) (report.Report, error) {
+	l.startTimer(regalmetrics.RegalLintRego)
+	defer l.stopTimer(regalmetrics.RegalLintRego)
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	regoArgs := l.prepareRegoArgs()
+	regoArgs := l.prepareRegoArgs(query)
 
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -443,7 +518,19 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 				return
 			}
 
-			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
+			if len(aggregates) > 0 {
+				enhancedAST["aggregate"] = aggregates
+			}
+
+			evalArgs := []rego.EvalOption{
+				rego.EvalInput(enhancedAST),
+			}
+
+			if l.metrics != nil {
+				evalArgs = append(evalArgs, rego.EvalMetrics(l.metrics))
+			}
+
+			resultSet, err := linterQuery.Eval(ctx, evalArgs...)
 			if err != nil {
 				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
 
@@ -492,25 +579,40 @@ func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
 	return r, nil
 }
 
-func (l Linter) readProvidedConfig() (map[string]any, error) {
+func (l Linter) readProvidedConfig() (config.Config, error) {
 	regalBundle, err := l.getBundleByName("regal")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get regal bundle: %w", err)
+		return config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
 	}
 
 	path := []string{"regal", "config", "provided"}
 
 	bundled, err := util.SearchMap(regalBundle.Data, path)
 	if err != nil {
-		return nil, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
+		return config.Config{}, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
 	}
 
 	bundledConf, ok := bundled.(map[string]any)
 	if !ok {
-		return nil, errors.New("expected 'rules' of object type")
+		return config.Config{}, errors.New("expected 'rules' of object type")
 	}
 
-	return bundledConf, nil
+	return config.FromMap(bundledConf) //nolint:wrapcheck
+}
+
+func (l Linter) readUserConfig() (config.Config, error) {
+	if l.configBundle != nil && l.configBundle.Data != nil {
+		userConfigMap := l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
+
+		userConfig, err := config.FromMap(userConfigMap)
+		if err != nil {
+			return config.Config{}, fmt.Errorf("failed to create config from map: %w", err)
+		}
+
+		return userConfig, nil
+	}
+
+	return config.Config{}, nil
 }
 
 func (l Linter) mergedConfig() (config.Config, error) {
@@ -518,31 +620,38 @@ func (l Linter) mergedConfig() (config.Config, error) {
 		return *l.combinedConfig, nil
 	}
 
-	providedConf, err := l.readProvidedConfig()
+	mergedConf, err := l.readProvidedConfig()
 	if err != nil {
 		return config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
 	}
 
-	userConfig := map[string]any{}
+	ruleLevels := providedConfLevels(mergedConf)
 
-	if l.configBundle != nil && l.configBundle.Data != nil {
-		userConfig = l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
+	userConf, err := l.readUserConfig()
+	if err != nil {
+		// Note that user config is optional — this will only happen if config is somehow invalid
+		return config.Config{}, fmt.Errorf("failed to read user config: %w", err)
 	}
 
-	mergedConf := util.CopyMap(providedConf)
-
-	err = mergo.Merge(&mergedConf, userConfig, mergo.WithOverride)
+	err = mergo.Merge(&mergedConf, userConf, mergo.WithOverride)
 	if err != nil {
 		return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	combinedConf, err := config.FromMap(mergedConf)
-	if err != nil {
-		return config.Config{}, fmt.Errorf("failed to create config from map: %w", err)
+	// If the user configuration contains rules with the level unset, copy the level from the provided configuration
+	for categoryName, rulesByCategory := range mergedConf.Rules {
+		for ruleName, rule := range rulesByCategory {
+			if rule.Level == "" {
+				if providedLevel, ok := ruleLevels[ruleName]; ok {
+					rule.Level = providedLevel
+					mergedConf.Rules[categoryName][ruleName] = rule
+				}
+			}
+		}
 	}
 
 	if l.debugMode {
-		bs, err := yaml.Marshal(combinedConf)
+		bs, err := yaml.Marshal(mergedConf)
 		if err != nil {
 			return config.Config{}, fmt.Errorf("failed to marshal config: %w", err)
 		}
@@ -551,7 +660,22 @@ func (l Linter) mergedConfig() (config.Config, error) {
 		log.Println(string(bs))
 	}
 
-	return combinedConf, nil
+	return mergedConf, nil
+}
+
+// Copy the level of each rule from the provided configuration.
+func providedConfLevels(conf config.Config) map[string]string {
+	ruleLevels := make(map[string]string)
+
+	for categoryName, rulesByCategory := range conf.Rules {
+		for ruleName := range rulesByCategory {
+			// Note that this assumes all rules have unique names,
+			// which we'll likely always want for provided rules
+			ruleLevels[ruleName] = conf.Rules[categoryName][ruleName].Level
+		}
+	}
+
+	return ruleLevels
 }
 
 func (l Linter) enabledGoRules() ([]rules.Rule, error) {
@@ -632,4 +756,117 @@ func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
 	}
 
 	return nil, fmt.Errorf("no regal bundle found")
+}
+
+func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]report.Aggregate, error) {
+	var result []report.Aggregate
+
+	regoArgs := l.prepareRegoArgs(ast.MustParseBody("aggregates = data.regal.main.aggregate"))
+
+	var linterQuery rego.PreparedEvalQuery
+
+	var err error
+
+	if linterQuery, err = rego.New(regoArgs...).PrepareForEval(ctx); err != nil {
+		return []report.Aggregate{}, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
+
+	if err = l.evalAndCollect(ctx, input, linterQuery,
+		// query input builder
+		func(name string, content string, module *ast.Module) (map[string]any, error) {
+			result, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			if err != nil {
+				return nil,
+					fmt.Errorf("could not enhance AST when buiding input during lint with Rego rules: %w", err)
+			}
+
+			return result, nil
+		},
+		// result collector
+		func(report report.Report) {
+			result = append(result, report.Aggregates...)
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// Process each file in input.Filenames in a goroutine, with the given Rego query and building the eval input using the
+// provided function. Collects the results via the provided collector. The collector is guaranteed to
+// run sequentially via a mutex.
+func (l Linter) evalAndCollect(ctx context.Context, input rules.Input, query rego.PreparedEvalQuery,
+	queryInputBuilder QueryInputBuilder,
+	reportCollector ReportCollector,
+) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	var mu sync.Mutex
+
+	errCh := make(chan error)
+
+	doneCh := make(chan bool)
+
+	for _, name := range input.FileNames {
+		wg.Add(1)
+
+		go func(name string) {
+			defer wg.Done()
+
+			queryInput, err := queryInputBuilder(name, input.FileContent[name], input.Modules[name])
+			if err != nil {
+				errCh <- fmt.Errorf("failed building query input: %w", err)
+
+				return
+			}
+
+			resultSet, err := query.Eval(ctx, rego.EvalInput(queryInput))
+			if err != nil {
+				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
+
+				return
+			}
+
+			result, err := resultSetToReport(resultSet)
+			if err != nil {
+				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
+
+				return
+			}
+
+			mu.Lock()
+			reportCollector(result)
+			mu.Unlock()
+		}(name)
+	}
+
+	go func() {
+		wg.Wait()
+		doneCh <- true
+	}()
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("context cancelled: %w", ctx.Err())
+	case err := <-errCh:
+		return fmt.Errorf("error encountered in rule evaluation %w", err)
+	case <-doneCh:
+		return nil
+	}
+}
+
+func (l Linter) startTimer(name string) {
+	if l.metrics != nil {
+		l.metrics.Timer(name).Start()
+	}
+}
+
+func (l Linter) stopTimer(name string) {
+	if l.metrics != nil {
+		l.metrics.Timer(name).Stop()
+	}
 }

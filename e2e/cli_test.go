@@ -5,6 +5,7 @@ package e2e
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -132,7 +133,7 @@ func TestLintNonExistentDir(t *testing.T) {
 	}
 
 	if exp, act := "error(s) encountered while linting: errors encountered when reading files to lint: "+
-		"failed to filter paths: 1 error occurred during loading: stat "+td+"/what/ever: no such file or directory\n",
+		"failed to filter paths:\nstat "+td+"/what/ever: no such file or directory\n",
 		stdout.String(); exp != act {
 		t.Errorf("expected stdout %q, got %q", exp, act)
 	}
@@ -318,6 +319,52 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	}
 }
 
+func TestAggregatesAreCollectedAndUsed(t *testing.T) {
+	t.Parallel()
+	cwd := must(os.Getwd)
+	basedir := cwd + "/testdata/aggregates"
+
+	t.Run("Zero violations expected", func(t *testing.T) {
+		stdout := bytes.Buffer{}
+		stderr := bytes.Buffer{}
+
+		err := regal(&stdout, &stderr)("lint", "--format", "json", basedir+"/rego", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego")
+
+		if exp, act := 0, ExitStatus(err); exp != act {
+			t.Errorf("expected exit status %d, got %d", exp, act)
+		}
+
+		if exp, act := "", stderr.String(); exp != act {
+			t.Errorf("expected stderr %q, got %q", exp, act)
+		}
+	})
+
+	t.Run("One violation expected", func(t *testing.T) {
+		stdout := bytes.Buffer{}
+		stderr := bytes.Buffer{}
+		// By sending a single file to the command, we skip the aggregates computation, so we expect one violation
+		err := regal(&stdout, &stderr)("lint", "--format", "json", basedir+"/rego/policy_1.rego", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego")
+
+		if exp, act := 3, ExitStatus(err); exp != act {
+			t.Errorf("expected exit status %d, got %d", exp, act)
+		}
+
+		if exp, act := "", stderr.String(); exp != act {
+			t.Errorf("expected stderr %q, got %q", exp, act)
+		}
+
+		var rep report.Report
+
+		if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
+			t.Fatalf("expected JSON response, got %v", stdout.String())
+		}
+
+		if rep.Summary.NumViolations != 1 {
+			t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
+		}
+	})
+}
+
 func TestTestRegalBundledBundle(t *testing.T) {
 	t.Parallel()
 
@@ -447,12 +494,37 @@ func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
 	}
 }
 
+func TestMergeRuleConfigWithoutLevel(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := must(os.Getwd)
+
+	// No violations from the built-in configuration in the policy provided, but
+	// the user --config-file changes the max-file-length to 1, so this should fail
+	err := regal(&stdout, &stderr)("lint", "--config-file", cwd+"/testdata/configs/rule_without_level.yaml", cwd+"/testdata/custom_naming_convention")
+
+	if exp, act := 3, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+}
+
 func binary() string {
+	location := "../regal"
+
 	if b := os.Getenv("REGAL_BIN"); b != "" {
-		return b
+		location = b
 	}
 
-	return "../regal"
+	if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
+		log.Fatal("regal binary not found — make sure to run go build before running the e2e tests")
+	} else if err != nil {
+		log.Fatal(err)
+	}
+
+	return location
 }
 
 func regal(outs ...io.Writer) func(...string) error {

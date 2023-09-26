@@ -10,16 +10,14 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
+cfg := config.for_rule("style", "function-arg-return")
+
+except_functions := array.concat(object.get(cfg, "except-functions", []), ["print"])
+
 report contains violation if {
-	cfg := config.for_rule("style", "function-arg-return")
-
-	except_functions := array.concat(
-		object.get(cfg, "except-functions", []),
-		["print"],
-	)
-
-	# rule ignoring itself :)
-	# regal ignore:function-arg-return,unused-return-value
+	# note that traversing the ast.all_refs is not enough here,
+	# as we need the outer node to determine the arguments provided
+	# to the function call
 	walk(input.rules, [path, value])
 
 	regal.last(path) == "terms"
@@ -27,8 +25,9 @@ report contains violation if {
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
 
-	fn_name := value[0].value[0].value
+	fn_name := ast.ref_to_string(value[0].value)
 
+	not contains(fn_name, "$")
 	not fn_name in except_functions
 	fn_name in ast.all_function_names
 
