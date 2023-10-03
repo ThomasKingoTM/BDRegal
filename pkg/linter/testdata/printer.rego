@@ -3,7 +3,7 @@
 # related_resources:
 # - description: documentation
 #   ref: https://www.acmecorp.example.org/docs/regal/package
-package custom.regal.rules.utils["printer"]
+package custom.regal.rules.utils.printer
 
 import future.keywords.contains
 import future.keywords.if

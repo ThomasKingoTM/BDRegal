@@ -308,26 +308,6 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 	}
 }
 
-// filterReport removes all violations with a level lower than failLevel
-func filterReport(r report.Report, failLevel string) report.Report {
-	filteredReport := report.Report{}
-	filteredReport.Summary = r.Summary
-	filteredReport.Summary.NumViolations = 0
-
-	failLevelToInt := map[string]int{
-		"error":   1,
-		"warning": 0,
-	}
-
-	for _, violation := range r.Violations {
-		if failLevelToInt[violation.Level] >= failLevelToInt[failLevel] {
-			filteredReport.Violations = append(filteredReport.Violations, violation)
-			filteredReport.Summary.NumViolations++
-		}
-	}
-	return filteredReport
-}
-
 func readUserConfig(params lintCommandParams, regalDir *os.File) (userConfig *os.File, err error) {
 	if params.configFile != "" {
 		userConfig, err = os.Open(params.configFile)

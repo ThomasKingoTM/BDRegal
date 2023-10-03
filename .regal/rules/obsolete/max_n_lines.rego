@@ -2,19 +2,19 @@
 # description: Rules must adhere to the maximum number of lines (max-lines) specified in config.yaml.
 package custom.regal.rules.obsolete["max-n-lines"]
 
-import future.keywords.contains
-import future.keywords.every
-import future.keywords.if
-import future.keywords.in
+# import future.keywords.contains
+# import future.keywords.every
+# import future.keywords.if
+# import future.keywords.in
 
-import data.regal.config
-import data.regal.result
+# import data.regal.config
+# import data.regal.result
 
-report contains violation if {
-	#	not _number_of_lines_is_less_than_specified_in_config
+# report contains violation if {
+# 	#	not _number_of_lines_is_less_than_specified_in_config
 
-	violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
-}
+# 	violation := result.fail(rego.metadata.chain(), result.location(input.rules[0].head))
+# }
 
 #_object_of_opening_clauses := {index: line |
 #	some index, line in input.regal.file.lines

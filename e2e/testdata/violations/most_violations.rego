@@ -24,7 +24,7 @@ import data
 
 ### Bugs ###
 
-constant_condition {
+constant_condition if {
 	1 == 1
 }
 
@@ -32,7 +32,7 @@ constant_condition {
 # invalid-metadata-attribute: true
 should := "fail"
 
-not_equals_in_loop {
+not_equals_in_loop if {
 	"foo" != input.bar[_]
 }
 
@@ -41,17 +41,17 @@ contains := true
 
 top_level_iteration := input[_]
 
-unused_return_value {
+unused_return_value if {
 	indexof("foo", "o")
 }
 
 ### Idiomatic ###
 
-custom_has_key_construct(map, key) {
+custom_has_key_construct(map, key) if {
 	_ = map[key]
 }
 
-custom_in_construct(coll, item) {
+custom_in_construct(coll, item) if {
 	item == coll[_]
 }
 
@@ -65,11 +65,11 @@ get_foo(foo) := foo
 
 annotation := "detached"
 
-external_reference(_) {
+external_reference(_) if {
 	data.foo
 }
 
-function_arg_return {
+function_arg_return if {
 	indexof("foo", "o", i)
 	i == 1
 }
@@ -78,50 +78,53 @@ line_length_should_be_no_longer_than_120_characters_but_this_line_is_really_long
 
 #no-whitespace-comment
 
- opa_fmt := "fail"
+opa_fmt := "fail"
 
 preferSnakeCase := "fail"
 
 # todo-comment
 
-x := y {
+x := y if {
 	y := 1
 }
 
 use_assignment = "oparator"
 
-use_in_operator {
+use_in_operator if {
 	"item" == input.coll[_]
 }
 
 # this will also tringger the test-outside-test-package rule
 test_identically_named_tests := true
+
 test_identically_named_tests := true
 
-todo_test_bad {
+todo_test_bad if {
 	input.bad
 }
 
-print_or_trace_call {
+print_or_trace_call if {
 	print("forbidden!")
 }
 
 non_raw_regex_pattern := regex.match("[0-9]", "1")
 
-use_some_for_output_vars {
+use_some_for_output_vars if {
 	input.foo[output_var]
 }
 
 # metasyntactic variable
 foo := "bar"
 
-chained_rule_body {
+chained_rule_body if {
 	input.x
-} {
+}
+
+chained_rule_body if {
 	input.y
 }
 
 # dubious print sprintf
-y {
+y if {
 	print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 }
