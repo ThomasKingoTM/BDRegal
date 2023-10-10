@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v0.56.0](https://openpolicyagent.org/badge/v0.56.0)
+![OPA v0.57.0](https://openpolicyagent.org/badge/v0.57.0)
 
 Regal is a linter for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), with the goal of making your
 Rego magnificent!
@@ -25,6 +25,21 @@ Regal rules are to as large extent as possible
 using the JSON representation of the Rego abstract syntax tree (AST) as input, a
 few additional custom built-in functions and some indexed data structures to help
 with linting.
+
+## What People Say About Regal
+
+> I really like that at each release of Regal I learn something new!
+> Of all the linters I'm exposed to, Regal is probably the most instructive one.
+
+— Leonardo Taccari, [NetBSD](https://www.netbsd.org/)
+
+> Reviewing the Regal rules documentation. Pure gold.
+
+— Dima Korolev, [Miro](https://miro.com/)
+
+> Such an awesome project!
+
+— Shawn McGuire, [Atlassian](https://www.atlassian.com/)
 
 ## Getting Started
 
@@ -124,6 +139,30 @@ Documentation:	https://docs.styra.com/regal/rules/style/use-assignment-operator
 > will likely generate a lot of violations. You can do this by passing the `--disable-category style` flag to
 > `regal lint`.
 
+### GitHub Actions
+
+If you'd like to run Regal in GitHub actions, please consider using [`setup-regal`](https://github.com/StyraInc/setup-regal).
+A simple `.github/workflows/lint.yml` to run regal on PRs could look like this, where `policy` contains Rego files:
+
+```yaml
+name: Regal Lint
+on:
+  pull_request:
+jobs:
+  lint-rego:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: StyraInc/setup-regal@main
+      with:
+        version: latest
+
+    - name: Lint
+      run: regal lint --format=github ./policy
+```
+
+Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more information.
+
 ## Rules
 
 Regal comes with a set of built-in rules, grouped by category.
@@ -152,16 +191,19 @@ The following rules are currently available:
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                  | Naming convention violation                               |
 | idiomatic | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct) | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)           | Custom function may be replaced by `in` keyword           |
+| idiomatic | [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)       | Missing entrypoint annotation                             |
 | idiomatic | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)       | Use raw strings for regex patterns                        |
 | idiomatic | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                   | Use in to check for membership                            |
 | idiomatic | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars) | Use `some` to declare output variables                    |
 | imports   | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)         | Avoid importing input                                     |
 | imports   | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)   | Use explicit future keyword imports                       |
 | imports   | [import-shadows-import](https://docs.styra.com/regal/rules/imports/import-shadows-import)         | Import shadows another import                             |
+| imports   | [prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports)       | Prefer importing packages over rules                      |
 | imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
 | imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)         | Redundant import of data                                  |
 | style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)   | Avoid get_ and list_ prefix for rules and functions       |
 | style     | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                   | Avoid chaining rule bodies                                |
+| style     | [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)                   | Prefer default assignment over fallback else              |
 | style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                   | Detached metadata annotation                              |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                 | Reference to input, data or rule ref in function body     |
 | style     | [file-length](https://docs.styra.com/regal/rules/style/file-length)                               | Max file length exceeded                                  |
@@ -171,6 +213,7 @@ The following rules are currently available:
 | style     | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                       | File should be formatted with `opa fmt`                   |
 | style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                   | Prefer snake_case for names                               |
 | style     | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)     | Prefer `some .. in` for iteration                         |
+| style     | [rule-length](https://docs.styra.com/regal/rules/style/rule-length)                               | Max rule length exceeded                                  |
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |
@@ -185,6 +228,16 @@ The following rules are currently available:
 <!-- RULES_TABLE_END -->
 
 By default, all rules except for those in the `custom` category are currently **enabled**.
+
+#### Aggregate Rules
+
+Most Regal rules will use data only from a single file at a time, with no consideration for other files. A few rules
+however require data from multiple files, and will therefore collect, or aggregate, data from all files provided for
+linting. These rules are called *aggregate rules*, and will only be run when there is more than one file to lint, such
+as when linting a directory or a whole policy repository. One example of such a rule is the `prefer-package-imports`
+rule, which will aggregate package names and imports from all provided policies in order to determine if any imports
+are pointing to rules or functions rather than packages. You normally won't need to care about this distinction other
+than being aware of the fact that some linter rules won't be run when linting a single file.
 
 If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
 request, or better yet, submit a PR! See the [custom rules](/docs/custom-rules.md) page for more information on how to

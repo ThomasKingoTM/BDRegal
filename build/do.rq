@@ -71,6 +71,8 @@ job.tasks {
 #   - https://github.com/golangci/golangci-lint
 #   - https://github.com/open-policy-agent/opa
 job.pr {
+	build(true)
+
 	# format
 	fmt_all
 	write_readme
@@ -153,11 +155,13 @@ e2e {
 }
 
 lint {
+	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run("./regal lint --format pretty bundle")
 }
 
 lint_ci {
-	run("./regal lint --format github bundle")
+	run("opa check --strict --capabilities build/capabilities.json bundle")
+	run_quiet("./regal lint --format github bundle")
 }
 
 check_readme {
@@ -211,6 +215,18 @@ run(cmd) {
 	out := rq.run(args, {})
 	{ rq.error(sprintf("\nstdout: %s\nstderr: %s", [out.stdout, out.stderr])) | out.exitcode != 0 }
 	print(out.stdout)
+}
+
+run_quiet(cmd) {
+	print(cmd)
+	args := split(cmd, " ")
+	out := rq.run(args, {})
+	print(out.stdout)
+	{true |
+		out.exitcode != 0
+		print(out.stderr)
+		rq.error("")
+	}
 }
 
 github(what, j) {

@@ -8,6 +8,7 @@ import future.keywords.in
 
 import data.regal.result
 
+# regal ignore:rule-length
 report contains violation if {
 	some rule in input.rules
 
@@ -24,7 +25,6 @@ report contains violation if {
 
 	# Var assignment in rule head
 	rule.head.value.type == "var"
-	rule_head_var := rule.head.value.value
 
 	# If a `with` statement is found in body, back out, as these
 	# can't be moved to the rule head
@@ -38,7 +38,7 @@ report contains violation if {
 
 	# Of var declared in rule head
 	terms[1].type == "var"
-	terms[1].value == rule_head_var
+	terms[1].value == rule.head.value.value
 
 	violation := result.fail(rego.metadata.chain(), result.location(terms[1]))
 }

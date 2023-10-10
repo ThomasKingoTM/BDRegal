@@ -6,10 +6,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/topdown"
 
+	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/rules"
 )
 
 func TestLintWithDefaultBundle(t *testing.T) {
@@ -25,10 +29,7 @@ camelCase {
 
 	linter := NewLinter().WithEnableAll(true).WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 2 {
 		t.Fatalf("expected 2 violations, got %d", len(result.Violations))
@@ -85,10 +86,7 @@ or := 1
 
 	linter := NewLinter().WithUserConfig(userConfig).WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d - violations: %v", len(result.Violations), result.Violations)
@@ -187,10 +185,7 @@ or := 1
 
 			linter = linter.WithInputModules(&input)
 
-			result, err := linter.Lint(context.Background())
-			if err != nil {
-				t.Fatal(err)
-			}
+			result := testutil.Must(linter.Lint(context.Background()))(t)
 
 			if len(result.Violations) != len(tt.expViolations) {
 				t.Fatalf("expected %d violation, got %d: %v",
@@ -220,10 +215,7 @@ func TestLintWithGoRule(t *testing.T) {
 		WithEnableAll(true).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
@@ -249,10 +241,7 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 		WithUserConfig(userConfig).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 0 {
 		t.Fatalf("expected no violation, got %d", len(result.Violations))
@@ -268,10 +257,7 @@ func TestLintWithCustomRule(t *testing.T) {
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
@@ -296,10 +282,7 @@ func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 0 {
 		t.Fatalf("expected no violation, got %d", len(result.Violations))
@@ -323,10 +306,7 @@ func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 		WithUserConfig(userConfig).
 		WithInputModules(&input)
 
-	mergedConfig, err := linter.mergedConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
+	mergedConfig := testutil.Must(linter.mergedConfig())(t)
 
 	// Since no level was provided, "error" should be inherited from the provided configuration for the rule
 	if mergedConfig.Rules["style"]["file-length"].Level != "error" {
@@ -361,5 +341,56 @@ func TestLintWithPrintHook(t *testing.T) {
 
 	if bb.String() != "p.rego\n" {
 		t.Errorf("expected print hook to print file name 'p.rego' and newline, got %q", bb.String())
+	}
+}
+
+func TestLintWithAggregateRule(t *testing.T) {
+	t.Parallel()
+
+	policies := make(map[string]string)
+	policies["foo.rego"] = `package foo
+		import data.bar
+
+		default allow := false
+	`
+	policies["bar.rego"] = `package bar
+		import data.foo.allow
+	`
+
+	modules := make(map[string]*ast.Module)
+
+	for filename, content := range policies {
+		modules[filename] = parse.MustParseModule(content)
+	}
+
+	input := rules.NewInput(policies, modules)
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("prefer-package-imports").
+		WithInputModules(&input)
+
+	result := testutil.Must(linter.Lint(context.Background()))(t)
+
+	if len(result.Violations) != 1 {
+		t.Fatalf("expected no violation, got %d", len(result.Violations))
+	}
+
+	violation := result.Violations[0]
+
+	if violation.Title != "prefer-package-imports" {
+		t.Errorf("expected violation to be 'prefer-package-imports', got %q", violation.Title)
+	}
+
+	if violation.Location.Row != 2 {
+		t.Errorf("expected violation to be on line 2, got %d", violation.Location.Row)
+	}
+
+	if violation.Location.Column != 3 {
+		t.Errorf("expected violation to be on column 3, got %d", violation.Location.Column)
+	}
+
+	if *violation.Location.Text != "\t\timport data.foo.allow" {
+		t.Errorf("expected violation to be on 'import data.foo.allow', got %q", *violation.Location.Text)
 	}
 }
