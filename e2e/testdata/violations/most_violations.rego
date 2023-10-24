@@ -22,9 +22,16 @@ import data.redundant.alias as alias
 # redundant-data-import
 import data
 
+# import-shadows-builtin
+import data.http
+
 # prefer-package-imports
 # aggregate rule, so will only fail if more than one file is linted
 import data.rule_named_if.allow
+
+rule := "here"
+
+import data.after.rule
 
 ### Bugs ###
 
@@ -49,6 +56,8 @@ unused_return_value if {
 	indexof("foo", "o")
 }
 
+zero_arity_function() := true
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) if {
@@ -68,6 +77,10 @@ non_raw_regex_pattern := regex.match("[0-9]", "1")
 use_in_operator {
 	"item" == input.coll[_]
 }
+
+prefer_set_or_object_rule := {x | some x in input; x == "violation"}
+
+equals_pattern_matching(x) := x == "x"
 
 ### Style ###
 

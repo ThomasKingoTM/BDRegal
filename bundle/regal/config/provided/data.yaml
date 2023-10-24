@@ -16,20 +16,28 @@ rules:
       level: error
     unused-return-value:
       level: error
+    zero-arity-function:
+      level: error
   custom:
     forbidden-function-call:
       forbidden-functions: []
       level: ignore
     naming-convention:
       level: ignore
+    prefer-value-in-head:
+      level: ignore
   idiomatic:
     custom-has-key-construct:
       level: error
     custom-in-construct:
       level: error
+    equals-pattern-matching:
+      level: error
     no-defined-entrypoint:
       level: error
     non-raw-regex-pattern:
+      level: error
+    prefer-set-or-object-rule:
       level: error
     use-in-operator:
       level: error
@@ -39,6 +47,10 @@ rules:
     avoid-importing-input:
       level: error
     implicit-future-keywords:
+      level: error
+    import-after-rule:
+      level: error
+    import-shadows-builtin:
       level: error
     import-shadows-import:
       level: error
