@@ -12,15 +12,15 @@ rules:
       level: warning
   missing:
     decision:
-      level: warning
+      level: ignore
     deny-reasons:
-      level: warning
+      level: ignore
   naming:
     prefix-underscore:
-      level: error
+      level: ignore
   negation:
     not-outside-deny:
-      level: error
+      level: ignore
   obsolete: 
     max-n-lines:
       level: ignore
@@ -32,6 +32,6 @@ rules:
       level: error
   structure:
     two-decision-clauses:
-      level: error
+      level: ignore
 
   

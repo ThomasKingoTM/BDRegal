@@ -1,29 +1,21 @@
 package util
 
-safe_gt(x, y) := x > y
-
-if {
+safe_gt(x, y) := x > y {
 	is_number(x)
 	is_number(y)
 }
 
-safe_lt(x, y) := x < y
-
-if {
+safe_lt(x, y) := x < y {
 	is_number(x)
 	is_number(y)
 }
 
-safe_ge(x, y) := x >= y
-
-if {
+safe_ge(x, y) := x >= y {
 	is_number(x)
 	is_number(y)
 }
 
-safe_le(x, y) := x <= y
-
-if {
+safe_le(x, y) := x <= y {
 	is_number(x)
 	is_number(y)
 }
